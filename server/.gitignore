@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+
+# The pictures the employees upload. They are real files on this machine,
+# so they do not belong in the repository.
+uploads

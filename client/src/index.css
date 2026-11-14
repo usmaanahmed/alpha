@@ -1,0 +1,196 @@
+/* Load the Inter font. This @import must stay above the tailwind import,
+   because css @import rules have to come before any other rule. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* These are the colors used by the shadcn ui components.
+   The palette is a modern, professional indigo theme on soft
+   cool-gray neutrals. */
+:root {
+  --radius: 0.75rem;
+
+  /* Neutrals (light mode) */
+  --background: oklch(0.986 0.003 247);
+  --foreground: oklch(0.21 0.03 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.03 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.03 265);
+
+  /* Brand: indigo */
+  --primary: oklch(0.54 0.2 274);
+  --primary-foreground: oklch(0.99 0.005 260);
+
+  --secondary: oklch(0.968 0.006 260);
+  --secondary-foreground: oklch(0.3 0.03 266);
+  --muted: oklch(0.968 0.006 260);
+  --muted-foreground: oklch(0.53 0.025 260);
+  --accent: oklch(0.955 0.017 270);
+  --accent-foreground: oklch(0.42 0.14 273);
+
+  --destructive: oklch(0.58 0.23 27);
+  --destructive-foreground: oklch(0.99 0.005 260);
+
+  --border: oklch(0.925 0.008 262);
+  --input: oklch(0.925 0.008 262);
+  --ring: oklch(0.54 0.2 274);
+
+  /* Chart palette (used by any future charts / stat accents) */
+  --chart-1: oklch(0.54 0.2 274);
+  --chart-2: oklch(0.62 0.17 210);
+  --chart-3: oklch(0.68 0.16 162);
+  --chart-4: oklch(0.72 0.18 55);
+  --chart-5: oklch(0.64 0.21 15);
+
+  /* Sidebar */
+  --sidebar: oklch(0.99 0.004 260);
+  --sidebar-foreground: oklch(0.21 0.03 265);
+  --sidebar-primary: oklch(0.54 0.2 274);
+  --sidebar-primary-foreground: oklch(0.99 0.005 260);
+  --sidebar-accent: oklch(0.955 0.017 270);
+  --sidebar-accent-foreground: oklch(0.42 0.14 273);
+  --sidebar-border: oklch(0.925 0.008 262);
+  --sidebar-ring: oklch(0.54 0.2 274);
+}
+
+.dark {
+  /* Neutrals (dark mode) — true, colourless gray/black. Chroma is 0 on
+     every surface token on purpose: the background, the cards, the
+     borders and the muted text never carry any indigo tint. Indigo shows
+     up only on the tokens below that actually draw an action (a button,
+     the active nav pill, a focus ring, a link) — see the next block. */
+  --background: oklch(0.15 0 0);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.195 0 0);
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.195 0 0);
+  --popover-foreground: oklch(0.97 0 0);
+
+  --secondary: oklch(0.26 0 0);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.26 0 0);
+  --muted-foreground: oklch(0.66 0 0);
+
+  --destructive: oklch(0.7 0.19 22);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+
+  /* Brand: the one place indigo is allowed in dark mode — primary
+     buttons, the active nav pill, focus rings and hover highlights. */
+  --primary: oklch(0.68 0.18 272);
+  --primary-foreground: oklch(0.99 0 0);
+  --accent: oklch(0.33 0.09 270);
+  --accent-foreground: oklch(0.93 0.04 270);
+  --ring: oklch(0.68 0.18 272);
+
+  --chart-1: oklch(0.68 0.18 272);
+  --chart-2: oklch(0.7 0.15 210);
+  --chart-3: oklch(0.72 0.15 162);
+  --chart-4: oklch(0.76 0.17 60);
+  --chart-5: oklch(0.7 0.19 15);
+
+  /* Sidebar — same rule: a plain near-black surface, indigo only on the
+     tokens that mark something as active or interactive. */
+  --sidebar: oklch(0.17 0 0);
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-primary: oklch(0.68 0.18 272);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.33 0.09 270);
+  --sidebar-accent-foreground: oklch(0.93 0.04 270);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.68 0.18 272);
+}
+
+/* This block turns the css variables above into tailwind classes
+   like "bg-background", "text-foreground", "border-border". */
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* A slim, modern scrollbar that matches the theme. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+    background-clip: content-box;
+  }
+
+  /* A row you drag sideways with a finger. The scrollbar is hidden because
+     the row itself already shows there is more to see on the right. */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

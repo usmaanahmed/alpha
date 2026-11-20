@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { randomUUID } from "node:crypto";
 import * as repository from "./employee.repository.js";
 import type { CreateEmployeeInput } from "./employee.types.js";
 import type { ServiceActor } from "../../types/service.types.js";
@@ -19,7 +20,6 @@ interface SheetColumn {
 const SHEET_COLUMNS: SheetColumn[] = [
   { header: "Name", width: 22 },
   { header: "Email", width: 28 },
-  { header: "Password", width: 16 },
   { header: "Phone", width: 16 },
   { header: "Department", width: 20 },
   { header: "Role", width: 18 },
@@ -30,7 +30,6 @@ const SHEET_COLUMNS: SheetColumn[] = [
   { header: "Date of Birth", width: 14 },
   { header: "Gender", width: 10 },
   { header: "Address", width: 30 },
-  { header: "Status", width: 10 },
 ];
 
 // The most rows one import accepts, so one request never runs for minutes.
@@ -106,18 +105,36 @@ export async function buildTemplateFile() {
   }));
   styleHeaderRow(sheet);
 
+  // One example row, so the user sees how every column is filled.
+  // The user must delete it (or replace it) before importing.
+  sheet.addRow([
+    "Muhammad Ahmed Khan",
+    "ahmed.khan@example.com",
+    "0300-1234567",
+    "Engineering",
+    "Employee",
+    "Software Engineer",
+    "BS Computer Science",
+    "Full Time",
+    "2026-01-15",
+    "1995-03-20",
+    "Male",
+    "House 12, Street 5, Gulberg III, Lahore, Pakistan",
+  ]);
+
   const help = workbook.addWorksheet("Instructions");
   help.getColumn(1).width = 110;
   const lines = [
     "How to fill the Employees sheet",
-    "Name, Email, Password, Department and Role are required. Every other column is optional.",
-    "Password must be at least 6 characters. It becomes the login password of the employee.",
+    "Row 2 is only an example. Delete it or replace it with your own employee before importing.",
+    "Name, Email, Department and Role are required. Every other column is optional.",
+    "There is no password column. After the import, set each employee's login password from the Employees page (Change password).",
+    "Every imported employee is created as Active.",
     "Department: write the department name. If it does not exist yet, it is created automatically.",
     "Role: write the name of one of your active roles exactly, for example Manager.",
     "Employment Type: Full Time, Part Time, Intern or Contract. Empty means Full Time.",
     "Joining Date and Date of Birth: write them like 2026-07-30.",
     "Gender: Male, Female or Other.",
-    "Status: Active or Inactive. Empty means Active.",
     "An email that already exists in the application is skipped, the other rows are still imported.",
     "Do not rename the column headers in the first row of the Employees sheet.",
   ];
@@ -133,7 +150,6 @@ export async function buildTemplateFile() {
 // GET /api/employees/export
 // ---------------------------------------------------------------------------
 // Every employee of the organization in the same columns as the template.
-// The password is never exported: we only store a hash of it.
 export async function buildExportFile(actor: ServiceActor) {
   const organizationId = String(actor.user?.organizationId);
   const employees = await repository.findEmployeesForExport(organizationId);
@@ -141,9 +157,7 @@ export async function buildExportFile(actor: ServiceActor) {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Employees");
 
-  // The export has no Password column.
-  const exportColumns = SHEET_COLUMNS.filter((column) => column.header !== "Password");
-  sheet.columns = exportColumns.map((column) => ({
+  sheet.columns = SHEET_COLUMNS.map((column) => ({
     header: column.header,
     width: column.width,
   }));
@@ -172,7 +186,6 @@ export async function buildExportFile(actor: ServiceActor) {
       dateToText(employee.dateOfBirth),
       gender,
       employee.address,
-      employee.status === "active" ? "Active" : "Inactive",
     ]);
   }
 
@@ -212,7 +225,7 @@ export async function importEmployees(actor: ServiceActor, fileBuffer: Buffer | 
   sheet.getRow(1).eachCell((cell, columnNumber) => {
     columnNumbers[cell.text.trim().toLowerCase()] = columnNumber;
   });
-  const requiredHeaders = ["Name", "Email", "Password", "Department", "Role"];
+  const requiredHeaders = ["Name", "Email", "Department", "Role"];
   for (const header of requiredHeaders) {
     if (!columnNumbers[header.toLowerCase()]) {
       return {
@@ -270,12 +283,11 @@ export async function importEmployees(actor: ServiceActor, fileBuffer: Buffer | 
 
     const name = readText(row, "Name");
     const emailText = readText(row, "Email");
-    const password = readText(row, "Password");
     const departmentName = readText(row, "Department");
     const roleName = readText(row, "Role");
 
     // A completely empty row is just empty space in the sheet.
-    const rowIsEmpty = name === "" && emailText === "" && password === "" && departmentName === "" && roleName === "";
+    const rowIsEmpty = name === "" && emailText === "" &&departmentName === "" && roleName === "";
     if (rowIsEmpty) {
       continue;
     }
@@ -289,10 +301,6 @@ export async function importEmployees(actor: ServiceActor, fileBuffer: Buffer | 
     const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     if (!emailLooksValid) {
       errors.push({ row: rowNumber, message: "Email is not valid" });
-      continue;
-    }
-    if (password.length < 6) {
-      errors.push({ row: rowNumber, message: "Password must be at least 6 characters" });
       continue;
     }
     if (departmentName === "") {
@@ -317,14 +325,6 @@ export async function importEmployees(actor: ServiceActor, fileBuffer: Buffer | 
     const gender = readText(row, "Gender").toLowerCase();
     if (gender !== "" && !GENDERS.includes(gender)) {
       errors.push({ row: rowNumber, message: "Gender must be Male, Female or Other" });
-      continue;
-    }
-    let status = readText(row, "Status").toLowerCase();
-    if (status === "") {
-      status = "active";
-    }
-    if (status !== "active" && status !== "inactive") {
-      errors.push({ row: rowNumber, message: "Status must be Active or Inactive" });
       continue;
     }
     const joiningDate = readDate(row, "Joining Date");
@@ -363,11 +363,13 @@ export async function importEmployees(actor: ServiceActor, fileBuffer: Buffer | 
     const input: CreateEmployeeInput = {
       name: name,
       email: email,
-      password: password,
+      // The sheet has no password. The real one is set later by the
+      // organization, so for now the login gets a random one nobody knows.
+      password: randomUUID(),
       phone: readText(row, "Phone"),
       departmentId: departmentId,
       roleId: roleId,
-      status: status === "active" ? "active" : "inactive",
+      status: "active",
       employmentType: employmentType as CreateEmployeeInput["employmentType"],
       gender: gender as CreateEmployeeInput["gender"],
     };
@@ -382,7 +384,7 @@ export async function importEmployees(actor: ServiceActor, fileBuffer: Buffer | 
       exitDate: null,
       exitReason: "",
     });
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await hashPassword(input.password);
     await repository.insertUser(input, email, hashedPassword, organizationId, employee);
     createdCount++;
   }

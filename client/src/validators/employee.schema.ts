@@ -18,6 +18,7 @@ export const createEmployeeSchema = z.object({
 
   // --- HR profile ---
   designation: z.string().optional(),
+  qualification: z.string().optional(),
   employmentType: z.enum(["full_time", "part_time", "intern", "contract"]),
   joiningDate: z.string().optional(),
   dateOfBirth: z.string().optional(),

@@ -11,6 +11,7 @@ const objectId = /^[0-9a-fA-F]{24}$/;
 // optional ids below also accept "".
 const hrProfileFields = {
   designation: z.string().optional(),
+  qualification: z.string().optional(),
   employmentType: z.enum(["full_time", "part_time", "intern", "contract"]),
   // The dates come from an <input type="date"> as the text "2026-07-30".
   joiningDate: z.string().optional(),

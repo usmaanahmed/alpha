@@ -10,6 +10,11 @@ import {
   changeEmployeePassword,
   deleteEmployee,
 } from "./employee.controller.js";
+import {
+  downloadTemplate,
+  exportEmployees,
+  importEmployees,
+} from "./employeeExcel.controller.js";
 import { getEmployeeActivity } from "./employeeActivity.controller.js";
 import {
   createEmployeeSchema,
@@ -21,7 +26,7 @@ import { requireLogin, requireOrganizationOrEmployee } from "../../middlewares/a
 import { requirePermission, requireModule, requireFeature } from "../../middlewares/permission.middleware.js";
 import { MODULES, FEATURES } from "../../config/modules.js";
 import { PERMISSIONS } from "../../config/permissions.js";
-import { uploadEmployeePhoto } from "../../middlewares/upload.middleware.js";
+import { uploadEmployeePhoto, uploadEmployeeSheet } from "../../middlewares/upload.middleware.js";
 
 const router = express.Router();
 
@@ -35,6 +40,14 @@ router.use(requireLogin, requireOrganizationOrEmployee);
 router.use(requireModule(MODULES.EMPLOYEES));
 
 router.get("/", requirePermission(PERMISSIONS.EMPLOYEES_VIEW), getAllEmployees);
+
+// The Excel files. These three must stay above the "/:id" routes, otherwise
+// Express would read the word "template" as the id of an employee.
+router.get("/template", requirePermission(PERMISSIONS.EMPLOYEES_CREATE), downloadTemplate);
+
+router.get("/export", requirePermission(PERMISSIONS.EMPLOYEES_VIEW), exportEmployees);
+
+router.post("/import", requirePermission(PERMISSIONS.EMPLOYEES_CREATE), uploadEmployeeSheet, importEmployees);
 
 // The read routes of one employee, used by the employee detail page.
 router.get("/:id", requirePermission(PERMISSIONS.EMPLOYEES_VIEW), validateIdParam, getOneEmployee);

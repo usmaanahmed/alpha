@@ -11,6 +11,7 @@ import type { Attendance, LeaveBalance } from "@/types/hr.types";
 // and photo is the picture the user chose, or null when none was chosen.
 export interface EmployeeProfileValues {
   designation?: string;
+  qualification?: string;
   employmentType: "full_time" | "part_time" | "intern" | "contract";
   joiningDate?: string;
   dateOfBirth?: string;
@@ -140,6 +141,53 @@ export async function changeEmployeePasswordRequest(id: string, password: string
     password: password,
   });
   return response.data;
+}
+
+// ---------------------------------------------------------------------------
+// Excel import and export
+// ---------------------------------------------------------------------------
+
+// One row of the sheet that could not be imported.
+export interface EmployeeImportError {
+  row: number;
+  message: string;
+}
+
+export interface EmployeeImportResult {
+  createdCount: number;
+  createdDepartmentCount: number;
+  errors: EmployeeImportError[];
+}
+
+// Ask the server for an Excel file and let the browser save it.
+// responseType "blob" means "this answer is a file, not JSON".
+async function downloadExcelFile(url: string, fileName: string) {
+  const response = await axiosClient.get(url, { responseType: "blob" });
+  const fileUrl = window.URL.createObjectURL(response.data as Blob);
+
+  // A hidden link that we click by code is the usual way to start a download.
+  const link = document.createElement("a");
+  link.href = fileUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(fileUrl);
+}
+
+export async function downloadEmployeeTemplateRequest() {
+  await downloadExcelFile("/employees/template", "employee-template.xlsx");
+}
+
+export async function exportEmployeesRequest() {
+  await downloadExcelFile("/employees/export", "employees.xlsx");
+}
+
+export async function importEmployeesRequest(file: File) {
+  const formData = new FormData();
+  formData.append("sheet", file);
+  const response = await axiosClient.post("/employees/import", formData);
+  return response.data.data as EmployeeImportResult;
 }
 
 export async function deleteEmployeeRequest(id: string) {

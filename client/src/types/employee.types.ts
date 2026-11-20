@@ -26,6 +26,9 @@ export interface Employee {
   // "employee-1753180000-123456789.jpg". Empty means no picture.
   photo: string;
   designation: string;
+  // The education of the person, like "BSc Computer Science".
+  // Employees saved before this field existed have no value, so it can be missing.
+  qualification?: string;
   employmentType: "full_time" | "part_time" | "intern" | "contract";
   // The dates come back as text like "2026-07-30T00:00:00.000Z",
   // and null when the field was left empty.

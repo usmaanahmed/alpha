@@ -9,6 +9,7 @@ export interface CreateEmployeeInput {
   roleId: string;
   status: "active" | "inactive";
   designation?: string;
+  qualification?: string;
   joiningDate?: string;
   dateOfBirth?: string;
   gender?: "" | "other" | "male" | "female";
@@ -26,6 +27,7 @@ export interface UpdateEmployeeInput {
   roleId: string;
   status: "active" | "inactive";
   designation?: string;
+  qualification?: string;
   joiningDate?: string;
   dateOfBirth?: string;
   gender?: "" | "other" | "male" | "female";
@@ -69,6 +71,7 @@ export interface ActivityEvent {
 
 export interface HrProfile {
   designation: string;
+  qualification: string;
   employmentType: "full_time" | "part_time" | "intern" | "contract";
   joiningDate: Date | null;
   dateOfBirth: Date | null;
@@ -105,6 +108,8 @@ export interface EmployeeDocument extends mongoose.Document {
   // The job title, like "Senior Developer". This is not the same as role:
   // role decides what the person may do in the app, designation is only text.
   designation: string;
+  // The highest education of the person, like "BSc Computer Science".
+  qualification: string;
   employmentType: EmploymentType;
   joiningDate: Date | null;
   dateOfBirth: Date | null;

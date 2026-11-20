@@ -23,6 +23,7 @@ import { notifyAboutMyAccount } from "../../utils/notification.util.js";
 function readHrProfileFields(input: UpdateEmployeeInput): HrProfile {
   return {
     designation: input.designation || "",
+    qualification: input.qualification || "",
     employmentType: input.employmentType,
     joiningDate: toDayStart(input.joiningDate),
     dateOfBirth: toDayStart(input.dateOfBirth),
@@ -269,6 +270,7 @@ export async function updateEmployee(
   employee.status = input.status;
   const hrFields = readHrProfileFields(input);
   employee.designation = hrFields.designation;
+  employee.qualification = hrFields.qualification;
   employee.employmentType = hrFields.employmentType;
   employee.joiningDate = hrFields.joiningDate;
   employee.dateOfBirth = hrFields.dateOfBirth;

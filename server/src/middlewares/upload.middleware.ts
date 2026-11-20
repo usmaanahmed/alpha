@@ -104,6 +104,45 @@ export function deleteEmployeePhoto(fileName: string) {
 }
 
 // ---------------------------------------------------------------------------
+// The Excel sheet of the employee import
+// ---------------------------------------------------------------------------
+
+// The sheet is read once and thrown away, so it is kept in memory (file.buffer)
+// and never written to the uploads folder.
+const sheetUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+  fileFilter: (req, file, callback) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+    if (extension !== ".xlsx") {
+      return callback(new Error("Please upload an Excel file (.xlsx)"));
+    }
+    callback(null, true);
+  },
+});
+
+// "sheet" is the name of the field the React page sends.
+export function uploadEmployeeSheet(req: Request, res: Response, next: NextFunction) {
+  sheetUpload.single("sheet")(req, res, (error: any) => {
+    if (error) {
+      const message =
+        error.code === "LIMIT_FILE_SIZE"
+          ? "The sheet is too big, please use a file under 5 MB"
+          : error.message;
+
+      return res.status(400).json({
+        success: false,
+        message: message,
+      });
+    }
+
+    next();
+  });
+}
+
+// ---------------------------------------------------------------------------
 // The documents of a task and of a comment
 // ---------------------------------------------------------------------------
 

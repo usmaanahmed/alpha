@@ -212,3 +212,37 @@ export async function removeUser(employee: EmployeeDocument) {
 export async function removeEmployee(employee: EmployeeDocument) {
   return Employee.deleteOne({ _id: employee._id });
 }
+
+// ---------------------------------------------------------------------------
+// Used by the Excel import
+// ---------------------------------------------------------------------------
+
+// Every department of the organization, so the import can match the
+// department names of the sheet without asking the database for every row.
+export async function findAllDepartments(organizationId: string) {
+  return Department.find({ organization: organizationId });
+}
+
+// A department that was written in the sheet but does not exist yet.
+export async function insertDepartment(organizationId: string, name: string) {
+  return Department.create({
+    name: name,
+    organization: organizationId,
+  });
+}
+
+// The active roles of the organization, matched by name in the import.
+export async function findActiveRoles(organizationId: string) {
+  return Role.find({
+    organization: organizationId,
+    status: "active",
+  });
+}
+
+// Every employee with its department and role names, for the export.
+export async function findEmployeesForExport(organizationId: string) {
+  return Employee.find({ organization: organizationId })
+    .populate("department", "name")
+    .populate("role", "name")
+    .sort({ name: 1 });
+}

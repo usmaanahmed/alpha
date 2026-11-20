@@ -11,6 +11,9 @@ import {
   updateEmployeeRequest,
   changeEmployeePasswordRequest,
   deleteEmployeeRequest,
+  downloadEmployeeTemplateRequest,
+  exportEmployeesRequest,
+  importEmployeesRequest,
 } from "@/api/employee.api";
 import type {
   CreateEmployeeValues,
@@ -122,6 +125,43 @@ export function useChangeEmployeePassword() {
       changeEmployeePasswordRequest(input.id, input.password),
     onSuccess: () => {
       toast.success("Password changed");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+}
+
+export function useDownloadEmployeeTemplate() {
+  return useMutation({
+    mutationFn: downloadEmployeeTemplateRequest,
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+}
+
+export function useExportEmployees() {
+  return useMutation({
+    mutationFn: exportEmployeesRequest,
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+}
+
+// The page shows the result itself (how many were added, which rows failed),
+// so this hook only refreshes the table and reports a failed upload.
+export function useImportEmployees() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => importEmployeesRequest(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      // The import may have created new departments.
+      queryClient.invalidateQueries({ queryKey: ["departments"] });
+      queryClient.invalidateQueries({ queryKey: ["active-departments"] });
     },
     onError: (error) => {
       toast.error(getErrorMessage(error));

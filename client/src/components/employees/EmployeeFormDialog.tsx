@@ -43,6 +43,7 @@ const emptyForm: EmployeeFormValues = {
   roleId: "",
   status: "active",
   designation: "",
+  qualification: "",
   employmentType: "full_time",
   joiningDate: "",
   dateOfBirth: "",
@@ -115,6 +116,7 @@ export function EmployeeFormDialog(props: {
       roleId: oldRoleIsStillActive ? props.employee.role._id : "",
       status: props.employee.status,
       designation: props.employee.designation,
+      qualification: props.employee.qualification || "",
       employmentType: props.employee.employmentType,
       joiningDate: toDateInputValue(props.employee.joiningDate),
       dateOfBirth: toDateInputValue(props.employee.dateOfBirth),
@@ -137,6 +139,7 @@ export function EmployeeFormDialog(props: {
       roleId: values.roleId,
       status: values.status,
       designation: values.designation,
+      qualification: values.qualification,
       employmentType: values.employmentType,
       joiningDate: values.joiningDate,
       dateOfBirth: values.dateOfBirth,
@@ -322,6 +325,17 @@ export function EmployeeFormDialog(props: {
                 The job title. The role above decides what the person may do
                 in the app, this is only text.
               </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="employee-qualification">
+                Qualification (optional)
+              </Label>
+              <Input
+                id="employee-qualification"
+                placeholder="BSc Computer Science"
+                {...form.register("qualification")}
+              />
             </div>
 
             <div className="flex flex-col gap-2">

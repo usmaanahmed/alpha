@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -52,17 +51,14 @@ export function LoginPage() {
       <div className="pointer-events-none absolute -top-40 left-1/2 h-128 w-lg -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
 
       <Card className="relative w-full max-w-sm">
-        <CardHeader className="items-center text-center">
+        <CardHeader className="justify-items-center text-center">
           {/* Brand mark above the title. */}
           <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <Building2 className="h-6 w-6" />
           </div>
           <CardTitle className="text-xl tracking-tight">
-            Multi Tenant OMS
+            Alpha Evolution
           </CardTitle>
-          <CardDescription>
-            Login as SaaS owner, as an organization or as an employee.
-          </CardDescription>
         </CardHeader>
 
         <CardContent>

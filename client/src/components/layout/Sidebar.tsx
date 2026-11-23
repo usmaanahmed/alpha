@@ -203,7 +203,7 @@ export function Sidebar(props: {
             )}
           >
             <p className="truncate text-sm font-bold leading-tight text-foreground">
-              Alpha Evolution
+              Multi Tenant OMS
             </p>
             <p className="truncate text-[0.7rem] text-muted-foreground">
               Workspace

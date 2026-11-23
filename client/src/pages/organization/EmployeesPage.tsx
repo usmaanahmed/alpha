@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { EmployeeTable } from "@/components/employees/EmployeeTable";
 import { EmployeeFormDialog } from "@/components/employees/EmployeeFormDialog";
 import { EmployeeImportResultDialog } from "@/components/employees/EmployeeImportResultDialog";
+import { EmployeeSelectionDock } from "@/components/employees/EmployeeSelectionDock";
 import { EmployeePasswordDialog } from "@/components/employees/EmployeePasswordDialog";
 import {
   useEmployees,
@@ -14,8 +15,11 @@ import {
   useDownloadEmployeeTemplate,
   useExportEmployees,
   useImportEmployees,
+  useBulkDeleteEmployees,
+  useBulkEmployeeStatus,
 } from "@/hooks/useEmployees";
 import type { EmployeeImportResult } from "@/api/employee.api";
+import type { RowSelectionState } from "@tanstack/react-table";
 import { useOpenCreateFromUrl } from "@/hooks/useOpenCreateFromUrl";
 import { useAuth } from "@/context/AuthContext";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -28,6 +32,28 @@ export function EmployeesPage() {
   const downloadTemplate = useDownloadEmployeeTemplate();
   const exportEmployees = useExportEmployees();
   const importEmployees = useImportEmployees();
+  const bulkDelete = useBulkDeleteEmployees();
+  const bulkStatus = useBulkEmployeeStatus();
+
+  // The ticked rows of the table: { employeeId: true }. The dock at the
+  // bottom works on them.
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const selectedIds = Object.keys(rowSelection).filter(
+    (id) => rowSelection[id]
+  );
+
+  // Of the ticked employees, who is inactive right now (can be set active)
+  // and who is active right now (can be set inactive). A button is shown only
+  // when it would change somebody.
+  const allEmployees = employeesQuery.data || [];
+  const tickedEmployees = allEmployees.filter((employee) => rowSelection[employee._id]);
+  const inactiveIds = tickedEmployees
+    .filter((employee) => employee.status === "inactive")
+    .map((employee) => employee._id);
+  const activeIds = tickedEmployees
+    .filter((employee) => employee.status === "active")
+    .map((employee) => employee._id);
 
   // The real <input type="file"> is hidden, the Import button clicks it.
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -62,6 +88,25 @@ export function EmployeesPage() {
         if (result.createdCount > 0) {
           toast.success(result.createdCount + " employee(s) imported");
         }
+      },
+    });
+  }
+
+  function changeSelectedStatus(status: "active" | "inactive") {
+    // Only the employees that really change: "set active" skips the ones that
+    // are already active, and the other way round.
+    const idsToChange = status === "active" ? inactiveIds : activeIds;
+    bulkStatus.mutate(
+      { ids: idsToChange, status: status },
+      { onSuccess: () => setRowSelection({}) }
+    );
+  }
+
+  function confirmBulkDelete() {
+    bulkDelete.mutate(selectedIds, {
+      onSuccess: () => {
+        setIsBulkDeleteOpen(false);
+        setRowSelection({});
       },
     });
   }
@@ -135,6 +180,32 @@ export function EmployeesPage() {
         onEdit={openEditForm}
         onChangePassword={setEmployeeForPassword}
         onDelete={setEmployeeToDelete}
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+      />
+
+      <EmployeeSelectionDock
+        selectedCount={selectedIds.length}
+        canSetActive={can(PERMISSIONS.EMPLOYEES_EDIT) && inactiveIds.length > 0}
+        canSetInactive={can(PERMISSIONS.EMPLOYEES_EDIT) && activeIds.length > 0}
+        canDelete={can(PERMISSIONS.EMPLOYEES_DELETE)}
+        isBusy={bulkStatus.isPending || bulkDelete.isPending}
+        onSetActive={() => changeSelectedStatus("active")}
+        onSetInactive={() => changeSelectedStatus("inactive")}
+        onDelete={() => setIsBulkDeleteOpen(true)}
+        onClear={() => setRowSelection({})}
+      />
+
+      <ConfirmDialog
+        isOpen={isBulkDeleteOpen}
+        title="Delete selected employees"
+        description={
+          selectedIds.length +
+          " employee(s) will be deleted. An employee who still has tasks, leave requests or a team to lead is skipped."
+        }
+        isPending={bulkDelete.isPending}
+        onConfirm={confirmBulkDelete}
+        onClose={() => setIsBulkDeleteOpen(false)}
       />
 
       <EmployeeFormDialog

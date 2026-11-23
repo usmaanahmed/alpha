@@ -52,3 +52,19 @@ export const updateEmployeeSchema = z.object({
 export const changeEmployeePasswordSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
+
+// Rules for the bulk actions of the employee table.
+// At most 200 ids at one time, so one request never runs for minutes.
+const employeeIdList = z
+  .array(z.string().regex(objectId, "One of the employee ids is not valid"))
+  .min(1, "Please select at least one employee")
+  .max(200, "You can select at most 200 employees at one time");
+
+export const bulkDeleteEmployeesSchema = z.object({
+  ids: employeeIdList,
+});
+
+export const bulkStatusEmployeesSchema = z.object({
+  ids: employeeIdList,
+  status: z.enum(["active", "inactive"]),
+});

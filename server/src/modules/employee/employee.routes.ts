@@ -15,11 +15,14 @@ import {
   exportEmployees,
   importEmployees,
 } from "./employeeExcel.controller.js";
+import { bulkDeleteEmployees, bulkChangeStatus } from "./employeeBulk.controller.js";
 import { getEmployeeActivity } from "./employeeActivity.controller.js";
 import {
   createEmployeeSchema,
   updateEmployeeSchema,
   changeEmployeePasswordSchema,
+  bulkDeleteEmployeesSchema,
+  bulkStatusEmployeesSchema,
 } from "./employee.validator.js";
 import { validateBody, validateIdParam } from "../../middlewares/validate.middleware.js";
 import { requireLogin, requireOrganizationOrEmployee } from "../../middlewares/auth.middleware.js";
@@ -48,6 +51,12 @@ router.get("/template", requirePermission(PERMISSIONS.EMPLOYEES_CREATE), downloa
 router.get("/export", requirePermission(PERMISSIONS.EMPLOYEES_VIEW), exportEmployees);
 
 router.post("/import", requirePermission(PERMISSIONS.EMPLOYEES_CREATE), uploadEmployeeSheet, importEmployees);
+
+// The actions of the selected rows of the table. They sit above the "/:id"
+// routes for the same reason as the Excel ones.
+router.post("/bulk-delete", requirePermission(PERMISSIONS.EMPLOYEES_DELETE), validateBody(bulkDeleteEmployeesSchema), bulkDeleteEmployees);
+
+router.patch("/bulk-status", requirePermission(PERMISSIONS.EMPLOYEES_EDIT), validateBody(bulkStatusEmployeesSchema), bulkChangeStatus);
 
 // The read routes of one employee, used by the employee detail page.
 router.get("/:id", requirePermission(PERMISSIONS.EMPLOYEES_VIEW), validateIdParam, getOneEmployee);

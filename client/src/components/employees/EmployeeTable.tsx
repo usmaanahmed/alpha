@@ -12,6 +12,8 @@ import type {
   SortingState,
   ColumnFiltersState,
   VisibilityState,
+  RowSelectionState,
+  OnChangeFn,
 } from "@tanstack/react-table";
 import { Users, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +63,10 @@ interface EmployeeTableProps {
   onEdit: (employee: Employee) => void;
   onChangePassword: (employee: Employee) => void;
   onDelete: (employee: Employee) => void;
+  // The ticked rows, kept by the page because the page owns the dock with the
+  // bulk actions. The keys are employee ids.
+  rowSelection: RowSelectionState;
+  onRowSelectionChange: OnChangeFn<RowSelectionState>;
 }
 
 export function EmployeeTable(props: EmployeeTableProps) {
@@ -93,7 +99,46 @@ export function EmployeeTable(props: EmployeeTableProps) {
   // so the link to the detail page is built instead of written by hand.
   const employeesBase = getModuleBase(user?.role) + "/employees";
 
+  // Ticking rows only makes sense when the person can do something with them.
+  const canSelect = props.canEdit || props.canDelete;
+
+  const selectColumn: ColumnDef<Employee> = {
+    id: "select",
+    enableHiding: false,
+    enableSorting: false,
+    size: 36,
+    // The box in the header ticks or unticks every row of the page on screen.
+    header: ({ table }) => (
+      <input
+        type="checkbox"
+        aria-label="Select all rows of this page"
+        className="h-4 w-4 cursor-pointer accent-primary"
+        checked={table.getIsAllPageRowsSelected()}
+        ref={(box) => {
+          if (box) {
+            box.indeterminate =
+              !table.getIsAllPageRowsSelected() && table.getIsSomePageRowsSelected();
+          }
+        }}
+        onChange={table.getToggleAllPageRowsSelectedHandler()}
+      />
+    ),
+    // A click on the box must not open the row under it, so it stops here.
+    cell: ({ row }) => (
+      <div onClick={(event) => event.stopPropagation()}>
+        <input
+          type="checkbox"
+          aria-label={"Select " + row.original.name}
+          className="h-4 w-4 cursor-pointer accent-primary"
+          checked={row.getIsSelected()}
+          onChange={row.getToggleSelectedHandler()}
+        />
+      </div>
+    ),
+  };
+
   const columns: ColumnDef<Employee>[] = [
+    ...(canSelect ? [selectColumn] : []),
     {
       // The arrow that says "there is more under this line". It turns a
       // quarter when the row is open, so the state of the row is readable
@@ -238,7 +283,13 @@ export function EmployeeTable(props: EmployeeTableProps) {
       columnFilters: columnFilters,
       columnVisibility: columnVisibility,
       globalFilter: searchText,
+      rowSelection: props.rowSelection,
     },
+    // The id of the employee is the id of the row, so a ticked row stays
+    // ticked when the filters or the page change.
+    getRowId: (employee) => employee._id,
+    enableRowSelection: canSelect,
+    onRowSelectionChange: props.onRowSelectionChange,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
@@ -335,6 +386,9 @@ export function EmployeeTable(props: EmployeeTableProps) {
         //
         // The actions cell keeps its own clicks, so the menu still works.
         onRowClick={canOpenRows ? toggleRow : undefined}
+        rowClassName={(employee) =>
+          props.rowSelection[employee._id] ? "bg-primary/5" : undefined
+        }
         isRowExpanded={(employee) => employee._id === openEmployeeId}
         renderExpanded={(employee) => (
           <EmployeeActivityPanel

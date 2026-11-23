@@ -14,11 +14,14 @@ import {
   downloadEmployeeTemplateRequest,
   exportEmployeesRequest,
   importEmployeesRequest,
+  bulkDeleteEmployeesRequest,
+  bulkEmployeeStatusRequest,
 } from "@/api/employee.api";
 import type {
   CreateEmployeeValues,
   UpdateEmployeeValues,
 } from "@/api/employee.api";
+import type { BulkEmployeeResult } from "@/api/employee.api";
 import { getErrorMessage } from "@/api/axiosClient";
 
 // Every employee of my organization.
@@ -162,6 +165,54 @@ export function useImportEmployees() {
       // The import may have created new departments.
       queryClient.invalidateQueries({ queryKey: ["departments"] });
       queryClient.invalidateQueries({ queryKey: ["active-departments"] });
+    },
+    onError: (error) => {
+      // The message can be long (it lists the missing columns), so it stays longer.
+      toast.error(getErrorMessage(error), { duration: 15000 });
+    },
+  });
+}
+
+// Tells the user how a bulk action went: the good news first, and then who
+// was skipped and why (for example an employee who still has tasks).
+function reportBulkResult(result: BulkEmployeeResult, doneText: string) {
+  if (result.doneCount > 0) {
+    toast.success(result.doneCount + " employee(s) " + doneText);
+  }
+  if (result.failures.length > 0) {
+    const lines = result.failures
+      .slice(0, 4)
+      .map((failure) => failure.name + ": " + failure.message);
+    toast.error(result.failures.length + " employee(s) skipped. " + lines.join(" | "), {
+      duration: 12000,
+    });
+  }
+}
+
+export function useBulkDeleteEmployees() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) => bulkDeleteEmployeesRequest(ids),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      reportBulkResult(result, "deleted");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+}
+
+export function useBulkEmployeeStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { ids: string[]; status: "active" | "inactive" }) =>
+      bulkEmployeeStatusRequest(input.ids, input.status),
+    onSuccess: (result, input) => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      reportBulkResult(result, "set to " + input.status);
     },
     onError: (error) => {
       toast.error(getErrorMessage(error));

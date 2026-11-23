@@ -147,16 +147,30 @@ export async function changeEmployeePasswordRequest(id: string, password: string
 // Excel import and export
 // ---------------------------------------------------------------------------
 
-// One row of the sheet that could not be imported.
-export interface EmployeeImportError {
-  row: number;
+// One wrong cell of a row.
+export interface EmployeeImportProblem {
+  column: string;
+  // What the user wrote in that cell, "" when it was empty.
+  value: string;
   message: string;
 }
 
+// One row of the sheet that could not be imported.
+export interface EmployeeImportRowError {
+  row: number;
+  name: string;
+  problems: EmployeeImportProblem[];
+  // The columns of this row that were fine.
+  correctColumns: string[];
+  // Everything written in the row, by column header.
+  cells: Record<string, string>;
+}
+
 export interface EmployeeImportResult {
+  totalRows: number;
   createdCount: number;
   createdDepartmentCount: number;
-  errors: EmployeeImportError[];
+  rowErrors: EmployeeImportRowError[];
 }
 
 // Ask the server for an Excel file and let the browser save it.
@@ -188,6 +202,33 @@ export async function importEmployeesRequest(file: File) {
   formData.append("sheet", file);
   const response = await axiosClient.post("/employees/import", formData);
   return response.data.data as EmployeeImportResult;
+}
+
+// ---------------------------------------------------------------------------
+// Actions on the selected rows of the table
+// ---------------------------------------------------------------------------
+
+// What a bulk action answers: how many employees it worked on, and the ones
+// it could not touch with the reason.
+export interface BulkEmployeeResult {
+  doneCount: number;
+  failures: { name: string; message: string }[];
+}
+
+export async function bulkDeleteEmployeesRequest(ids: string[]) {
+  const response = await axiosClient.post("/employees/bulk-delete", { ids: ids });
+  return response.data.data as BulkEmployeeResult;
+}
+
+export async function bulkEmployeeStatusRequest(
+  ids: string[],
+  status: "active" | "inactive"
+) {
+  const response = await axiosClient.patch("/employees/bulk-status", {
+    ids: ids,
+    status: status,
+  });
+  return response.data.data as BulkEmployeeResult;
 }
 
 export async function deleteEmployeeRequest(id: string) {
